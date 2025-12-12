@@ -1,0 +1,142 @@
+"""
+LLM Client Unificado para Framework Tikun
+Soporta Gemini y Claude (Anthropic)
+"""
+
+import os
+import json
+import re
+from typing import Dict, Any, Optional
+from dotenv import load_dotenv
+
+load_dotenv()
+
+
+class LLMClient:
+    """Cliente base para LLMs"""
+
+    def __init__(self, model: str, api_key: Optional[str] = None):
+        self.model = model
+        self.api_key = api_key
+
+    def generate(self, prompt: str, temperature: float = 0.5) -> str:
+        """Genera respuesta del LLM"""
+        raise NotImplementedError
+
+    def parse_json_response(self, response: str) -> Dict[str, Any]:
+        """Parse JSON de respuesta del LLM"""
+        # Remove markdown code blocks if present
+        response = re.sub(r'```json\s*', '', response)
+        response = re.sub(r'```\s*$', '', response)
+        response = response.strip()
+
+        # Remove control characters that break JSON parsing
+        response = re.sub(r'[\x00-\x1f\x7f-\x9f]', '', response)
+
+        try:
+            return json.loads(response)
+        except json.JSONDecodeError as e:
+            # Try to extract JSON from text
+            json_match = re.search(r'\{.*\}', response, re.DOTALL)
+            if json_match:
+                cleaned = re.sub(r'[\x00-\x1f\x7f-\x9f]', '', json_match.group())
+                return json.loads(cleaned)
+            raise ValueError(f"Failed to parse JSON: {e}\nResponse: {response[:500]}")
+
+
+class GeminiClient(LLMClient):
+    """Cliente para Google Gemini"""
+
+    def __init__(self, model: str = "gemini-2.0-flash-exp", api_key: Optional[str] = None):
+        super().__init__(model, api_key or os.getenv("GEMINI_API_KEY"))
+
+        try:
+            import google.generativeai as genai
+            genai.configure(api_key=self.api_key)
+            self.client = genai.GenerativeModel(model)
+        except ImportError:
+            raise ImportError("google-generativeai not installed. Run: pip install google-generativeai")
+
+    def generate(self, prompt: str, temperature: float = 0.5) -> str:
+        """Genera respuesta de Gemini"""
+        response = self.client.generate_content(
+            prompt,
+            generation_config={
+                "temperature": temperature,
+                "max_output_tokens": 4096,
+            }
+        )
+        return response.text
+
+
+class ClaudeClient(LLMClient):
+    """Cliente para Anthropic Claude"""
+
+    def __init__(self, model: str = "claude-sonnet-4-20250514", api_key: Optional[str] = None):
+        super().__init__(model, api_key or os.getenv("ANTHROPIC_API_KEY"))
+
+        try:
+            import anthropic
+            self.client = anthropic.Anthropic(api_key=self.api_key)
+        except ImportError:
+            raise ImportError("anthropic not installed. Run: pip install anthropic")
+
+    def generate(self, prompt: str, temperature: float = 0.5) -> str:
+        """Genera respuesta de Claude"""
+        response = self.client.messages.create(
+            model=self.model,
+            max_tokens=4096,
+            temperature=temperature,
+            messages=[
+                {"role": "user", "content": prompt}
+            ]
+        )
+        return response.content[0].text
+
+
+class LLMClientFactory:
+    """Factory para crear clientes LLM"""
+
+    @staticmethod
+    def create_client(provider: str, model: Optional[str] = None, api_key: Optional[str] = None) -> LLMClient:
+        """
+        Crea cliente LLM
+
+        Args:
+            provider: 'gemini' o 'claude'
+            model: Modelo específico (opcional)
+            api_key: API key (opcional, usa .env si no se provee)
+
+        Returns:
+            LLMClient instance
+        """
+        if provider.lower() == 'gemini':
+            return GeminiClient(model or "gemini-2.0-flash-exp", api_key)
+        elif provider.lower() == 'claude':
+            return ClaudeClient(model or "claude-sonnet-4-20250514", api_key)
+        else:
+            raise ValueError(f"Unknown provider: {provider}. Use 'gemini' or 'claude'")
+
+
+# Default configurations per Sefira
+SEFIROT_LLM_MAPPING = {
+    'keter': ('gemini', 'gemini-2.0-flash-exp'),
+    'chochmah': ('gemini', 'gemini-2.0-flash-exp'),
+    'binah': ('gemini', 'gemini-2.0-flash-exp'),
+    'chesed': ('gemini', 'gemini-2.0-flash-exp'),
+    'gevurah': ('gemini', 'gemini-2.0-flash-exp'),
+    'tiferet': ('gemini', 'gemini-2.0-flash-exp'),
+    'netzach': ('gemini', 'gemini-2.0-flash-exp'),
+    'hod': ('gemini', 'gemini-2.0-flash-exp'),  # Gemini (cambiar a Claude si se tiene API key)
+    'yesod': ('gemini', 'gemini-2.0-flash-exp'),
+    'malchut': ('gemini', 'gemini-2.0-flash-exp'),
+}
+
+
+def get_llm_for_sefira(sefira_name: str) -> LLMClient:
+    """Obtiene cliente LLM configurado para una Sefirá específica"""
+    if sefira_name.lower() not in SEFIROT_LLM_MAPPING:
+        raise ValueError(f"Unknown sefira: {sefira_name}")
+
+    provider, model = SEFIROT_LLM_MAPPING[sefira_name.lower()]
+    return LLMClientFactory.create_client(provider, model)
