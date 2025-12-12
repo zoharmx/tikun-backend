@@ -230,6 +230,7 @@ Reemplaza `TU-USUARIO` con tu nombre de usuario de GitHub.
 - Es normal la primera vez después del sleep
 - Espera 30-60 segundos
 - Si persiste, revisa los logs
+- **Solución**: Configura keep-alive con cron-job.org (ver abajo)
 
 ---
 
@@ -251,6 +252,31 @@ Con el uso normal (100 análisis/mes):
 - **Mistral**: $0-2/mes (créditos gratis iniciales)
 
 **Total estimado**: $0.50-2.50/mes
+
+---
+
+## 🔄 BONUS: Evitar el "Sleep" del Servicio (Recomendado)
+
+El tier gratuito de Render duerme el servicio después de 15 minutos sin uso. La primera request tarda 30-60 segundos.
+
+### Solución: Usar Cron-Job.org (Gratis)
+
+**SÍ**, esto resuelve completamente el problema de los requests lentos.
+
+1. **Crea cuenta en**: https://cron-job.org/ (gratis)
+
+2. **Crea un nuevo cronjob**:
+   - **URL**: `https://tikun-backend-xxxx.onrender.com/`
+   - **Schedule**: Every **10 minutes**
+   - **Method**: GET
+
+3. **Guarda** y listo
+
+Ahora tu servicio **NUNCA** se duerme y todas las requests son instantáneas.
+
+**Alternativa mejor**: https://uptimerobot.com/ (monitoreo + keep-alive + alertas gratis)
+
+📖 **Guía detallada**: Lee `KEEP_ALIVE_GUIDE.md` para instrucciones paso a paso
 
 ---
 

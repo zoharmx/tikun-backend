@@ -33,13 +33,13 @@ MISTRAL_API_KEY=tu_clave_mistral_aqui
 
 ### Distribución de LLMs por Sefirot
 
-El framework usa múltiples LLMs de forma distribuida para aprovechar las fortalezas de cada uno:
+El framework usa principalmente Gemini (gratis) con Mistral y DeepSeek para módulos específicos:
 
-- **Gemini**: Keter, Chesed, Netzach, Malchut (alineación, expansión, estrategia, reporte)
-- **DeepSeek**: Chochmah, Gevurah, Hod (análisis profundo, restricción, análisis social)
-- **Mistral**: Binah, Tiferet, Yesod (entendimiento, balance, decisión)
+- **Gemini** (8 Sefirot): Keter, Chesed, Gevurah, Tiferet, Netzach, Hod, Yesod, Malchut, BinahSigma Occidente
+- **Mistral** (1 Sefira): Chochmah
+- **DeepSeek** (1 Sefira): BinahSigma Oriente
 
-Esto optimiza costos y calidad de análisis.
+Esta distribución optimiza costos (la mayoría usa Gemini gratis) y calidad de análisis.
 
 ## Instalación Local
 

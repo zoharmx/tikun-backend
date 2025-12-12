@@ -154,18 +154,20 @@ class LLMClientFactory:
 
 
 # Default configurations per Sefira
-# Usa Gemini (Google), DeepSeek y Mistral de forma distribuida
+# Distribución optimizada: Principalmente Gemini (gratis), Mistral y DeepSeek para módulos específicos
 SEFIROT_LLM_MAPPING = {
-    'keter': ('gemini', 'gemini-2.0-flash-exp'),      # Alineación inicial
-    'chochmah': ('deepseek', 'deepseek-chat'),        # Análisis profundo
-    'binah': ('mistral', 'mistral-large-latest'),     # Entendimiento
-    'chesed': ('gemini', 'gemini-2.0-flash-exp'),     # Expansión
-    'gevurah': ('deepseek', 'deepseek-chat'),         # Restricción
-    'tiferet': ('mistral', 'mistral-large-latest'),   # Balance
-    'netzach': ('gemini', 'gemini-2.0-flash-exp'),    # Estrategia
-    'hod': ('deepseek', 'deepseek-chat'),             # Análisis social
-    'yesod': ('mistral', 'mistral-large-latest'),     # Decisión
-    'malchut': ('gemini', 'gemini-2.0-flash-exp'),    # Reporte final
+    'keter': ('gemini', 'gemini-2.0-flash-exp'),          # Alineación inicial - GEMINI
+    'chochmah': ('mistral', 'mistral-large-latest'),      # Análisis profundo - MISTRAL
+    'binah_occidente': ('gemini', 'gemini-2.0-flash-exp'), # BinahSigma Occidente - GEMINI
+    'binah_oriente': ('deepseek', 'deepseek-chat'),       # BinahSigma Oriente - DEEPSEEK
+    'binah': ('gemini', 'gemini-2.0-flash-exp'),          # Binah default - GEMINI
+    'chesed': ('gemini', 'gemini-2.0-flash-exp'),         # Expansión - GEMINI
+    'gevurah': ('gemini', 'gemini-2.0-flash-exp'),        # Restricción - GEMINI
+    'tiferet': ('gemini', 'gemini-2.0-flash-exp'),        # Balance - GEMINI
+    'netzach': ('gemini', 'gemini-2.0-flash-exp'),        # Estrategia - GEMINI
+    'hod': ('gemini', 'gemini-2.0-flash-exp'),            # Análisis social - GEMINI
+    'yesod': ('gemini', 'gemini-2.0-flash-exp'),          # Decisión - GEMINI
+    'malchut': ('gemini', 'gemini-2.0-flash-exp'),        # Reporte final - GEMINI
 }
 
 
