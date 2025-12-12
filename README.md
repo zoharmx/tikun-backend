@@ -20,10 +20,26 @@ tikun_backend/
 Crea un archivo `.env` en la raíz con:
 
 ```env
-GOOGLE_API_KEY=tu_clave_aqui
-OPENAI_API_KEY=tu_clave_aqui
-ANTHROPIC_API_KEY=tu_clave_aqui
+GOOGLE_API_KEY=tu_clave_google_aqui
+DEEPSEEK_API_KEY=tu_clave_deepseek_aqui
+MISTRAL_API_KEY=tu_clave_mistral_aqui
 ```
+
+### Cómo Obtener las API Keys
+
+1. **Google Gemini**: https://makersuite.google.com/app/apikey (Gratis con límites generosos)
+2. **DeepSeek**: https://platform.deepseek.com/ (Muy económico, ~$0.14/M tokens)
+3. **Mistral**: https://console.mistral.ai/ (Gratis con créditos iniciales)
+
+### Distribución de LLMs por Sefirot
+
+El framework usa múltiples LLMs de forma distribuida para aprovechar las fortalezas de cada uno:
+
+- **Gemini**: Keter, Chesed, Netzach, Malchut (alineación, expansión, estrategia, reporte)
+- **DeepSeek**: Chochmah, Gevurah, Hod (análisis profundo, restricción, análisis social)
+- **Mistral**: Binah, Tiferet, Yesod (entendimiento, balance, decisión)
+
+Esto optimiza costos y calidad de análisis.
 
 ## Instalación Local
 
@@ -61,7 +77,7 @@ Una vez el servidor esté corriendo:
 
 ## Despliegue en Render
 
-### Opción 1: Usando render.yaml (Recomendado)
+### Opción 1: Usando render.yaml (Recomendado - GRATIS)
 
 1. Sube tu código a GitHub (si aún no lo has hecho):
 ```bash
@@ -78,12 +94,12 @@ git push -u origin main
 
 4. Conecta tu repositorio de GitHub
 
-5. Render detectará automáticamente el `render.yaml` y configurará el servicio
+5. Render detectará automáticamente el `render.yaml` y configurará el servicio **en el tier GRATUITO**
 
 6. Agrega las variables de entorno en el dashboard:
    - `GOOGLE_API_KEY`
-   - `OPENAI_API_KEY`
-   - `ANTHROPIC_API_KEY`
+   - `DEEPSEEK_API_KEY`
+   - `MISTRAL_API_KEY`
 
 7. Click en "Apply" para desplegar
 
@@ -98,11 +114,12 @@ git push -u origin main
 4. Configura:
    - **Name**: `tikun-backend`
    - **Environment**: `Python 3`
+   - **Plan**: **Free** (IMPORTANTE: Selecciona el plan gratuito)
    - **Build Command**: `pip install -r requirements.txt`
    - **Start Command**: `uvicorn api_server:app --host 0.0.0.0 --port $PORT`
 
 5. Variables de entorno:
-   - Agrega `GOOGLE_API_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`
+   - Agrega `GOOGLE_API_KEY`, `DEEPSEEK_API_KEY`, `MISTRAL_API_KEY`
 
 6. Click en "Create Web Service"
 

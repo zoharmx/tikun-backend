@@ -1,6 +1,6 @@
 """
 LLM Client Unificado para Framework Tikun
-Soporta Gemini y Claude (Anthropic)
+Soporta Gemini, DeepSeek y Mistral
 """
 
 import os
@@ -69,29 +69,60 @@ class GeminiClient(LLMClient):
         return response.text
 
 
-class ClaudeClient(LLMClient):
-    """Cliente para Anthropic Claude"""
+class DeepSeekClient(LLMClient):
+    """Cliente para DeepSeek (compatible con OpenAI API)"""
 
-    def __init__(self, model: str = "claude-sonnet-4-20250514", api_key: Optional[str] = None):
-        super().__init__(model, api_key or os.getenv("ANTHROPIC_API_KEY"))
+    def __init__(self, model: str = "deepseek-chat", api_key: Optional[str] = None):
+        super().__init__(model, api_key or os.getenv("DEEPSEEK_API_KEY"))
 
         try:
-            import anthropic
-            self.client = anthropic.Anthropic(api_key=self.api_key)
+            from openai import OpenAI
+            self.client = OpenAI(
+                api_key=self.api_key,
+                base_url="https://api.deepseek.com"
+            )
         except ImportError:
-            raise ImportError("anthropic not installed. Run: pip install anthropic")
+            raise ImportError("openai not installed. Run: pip install openai")
 
     def generate(self, prompt: str, temperature: float = 0.5) -> str:
-        """Genera respuesta de Claude"""
-        response = self.client.messages.create(
+        """Genera respuesta de DeepSeek"""
+        response = self.client.chat.completions.create(
             model=self.model,
-            max_tokens=4096,
-            temperature=temperature,
             messages=[
                 {"role": "user", "content": prompt}
-            ]
+            ],
+            temperature=temperature,
+            max_tokens=4096
         )
-        return response.content[0].text
+        return response.choices[0].message.content
+
+
+class MistralClient(LLMClient):
+    """Cliente para Mistral (compatible con OpenAI API)"""
+
+    def __init__(self, model: str = "mistral-large-latest", api_key: Optional[str] = None):
+        super().__init__(model, api_key or os.getenv("MISTRAL_API_KEY"))
+
+        try:
+            from openai import OpenAI
+            self.client = OpenAI(
+                api_key=self.api_key,
+                base_url="https://api.mistral.ai/v1"
+            )
+        except ImportError:
+            raise ImportError("openai not installed. Run: pip install openai")
+
+    def generate(self, prompt: str, temperature: float = 0.5) -> str:
+        """Genera respuesta de Mistral"""
+        response = self.client.chat.completions.create(
+            model=self.model,
+            messages=[
+                {"role": "user", "content": prompt}
+            ],
+            temperature=temperature,
+            max_tokens=4096
+        )
+        return response.choices[0].message.content
 
 
 class LLMClientFactory:
@@ -103,33 +134,38 @@ class LLMClientFactory:
         Crea cliente LLM
 
         Args:
-            provider: 'gemini' o 'claude'
+            provider: 'gemini', 'deepseek' o 'mistral'
             model: Modelo específico (opcional)
             api_key: API key (opcional, usa .env si no se provee)
 
         Returns:
             LLMClient instance
         """
-        if provider.lower() == 'gemini':
+        provider_lower = provider.lower()
+
+        if provider_lower == 'gemini':
             return GeminiClient(model or "gemini-2.0-flash-exp", api_key)
-        elif provider.lower() == 'claude':
-            return ClaudeClient(model or "claude-sonnet-4-20250514", api_key)
+        elif provider_lower == 'deepseek':
+            return DeepSeekClient(model or "deepseek-chat", api_key)
+        elif provider_lower == 'mistral':
+            return MistralClient(model or "mistral-large-latest", api_key)
         else:
-            raise ValueError(f"Unknown provider: {provider}. Use 'gemini' or 'claude'")
+            raise ValueError(f"Unknown provider: {provider}. Use 'gemini', 'deepseek' or 'mistral'")
 
 
 # Default configurations per Sefira
+# Usa Gemini (Google), DeepSeek y Mistral de forma distribuida
 SEFIROT_LLM_MAPPING = {
-    'keter': ('gemini', 'gemini-2.0-flash-exp'),
-    'chochmah': ('gemini', 'gemini-2.0-flash-exp'),
-    'binah': ('gemini', 'gemini-2.0-flash-exp'),
-    'chesed': ('gemini', 'gemini-2.0-flash-exp'),
-    'gevurah': ('gemini', 'gemini-2.0-flash-exp'),
-    'tiferet': ('gemini', 'gemini-2.0-flash-exp'),
-    'netzach': ('gemini', 'gemini-2.0-flash-exp'),
-    'hod': ('gemini', 'gemini-2.0-flash-exp'),  # Gemini (cambiar a Claude si se tiene API key)
-    'yesod': ('gemini', 'gemini-2.0-flash-exp'),
-    'malchut': ('gemini', 'gemini-2.0-flash-exp'),
+    'keter': ('gemini', 'gemini-2.0-flash-exp'),      # Alineación inicial
+    'chochmah': ('deepseek', 'deepseek-chat'),        # Análisis profundo
+    'binah': ('mistral', 'mistral-large-latest'),     # Entendimiento
+    'chesed': ('gemini', 'gemini-2.0-flash-exp'),     # Expansión
+    'gevurah': ('deepseek', 'deepseek-chat'),         # Restricción
+    'tiferet': ('mistral', 'mistral-large-latest'),   # Balance
+    'netzach': ('gemini', 'gemini-2.0-flash-exp'),    # Estrategia
+    'hod': ('deepseek', 'deepseek-chat'),             # Análisis social
+    'yesod': ('mistral', 'mistral-large-latest'),     # Decisión
+    'malchut': ('gemini', 'gemini-2.0-flash-exp'),    # Reporte final
 }
 
 
