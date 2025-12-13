@@ -1,6 +1,6 @@
 """
 LLM Client Unificado para Framework Tikun
-Soporta Gemini, DeepSeek y Mistral
+Soporta Gemini, Claude, y DeepSeek
 """
 
 import os
@@ -69,6 +69,31 @@ class GeminiClient(LLMClient):
         return response.text
 
 
+class ClaudeClient(LLMClient):
+    """Cliente para Anthropic Claude"""
+
+    def __init__(self, model: str = "claude-sonnet-4-20250514", api_key: Optional[str] = None):
+        super().__init__(model, api_key or os.getenv("ANTHROPIC_API_KEY"))
+
+        try:
+            import anthropic
+            self.client = anthropic.Anthropic(api_key=self.api_key)
+        except ImportError:
+            raise ImportError("anthropic not installed. Run: pip install anthropic")
+
+    def generate(self, prompt: str, temperature: float = 0.5) -> str:
+        """Genera respuesta de Claude"""
+        response = self.client.messages.create(
+            model=self.model,
+            max_tokens=4096,
+            temperature=temperature,
+            messages=[
+                {"role": "user", "content": prompt}
+            ]
+        )
+        return response.content[0].text
+
+
 class DeepSeekClient(LLMClient):
     """Cliente para DeepSeek (compatible con OpenAI API)"""
 
@@ -97,34 +122,6 @@ class DeepSeekClient(LLMClient):
         return response.choices[0].message.content
 
 
-class MistralClient(LLMClient):
-    """Cliente para Mistral (compatible con OpenAI API)"""
-
-    def __init__(self, model: str = "mistral-large-latest", api_key: Optional[str] = None):
-        super().__init__(model, api_key or os.getenv("MISTRAL_API_KEY"))
-
-        try:
-            from openai import OpenAI
-            self.client = OpenAI(
-                api_key=self.api_key,
-                base_url="https://api.mistral.ai/v1"
-            )
-        except ImportError:
-            raise ImportError("openai not installed. Run: pip install openai")
-
-    def generate(self, prompt: str, temperature: float = 0.5) -> str:
-        """Genera respuesta de Mistral"""
-        response = self.client.chat.completions.create(
-            model=self.model,
-            messages=[
-                {"role": "user", "content": prompt}
-            ],
-            temperature=temperature,
-            max_tokens=4096
-        )
-        return response.choices[0].message.content
-
-
 class LLMClientFactory:
     """Factory para crear clientes LLM"""
 
@@ -134,40 +131,35 @@ class LLMClientFactory:
         Crea cliente LLM
 
         Args:
-            provider: 'gemini', 'deepseek' o 'mistral'
+            provider: 'gemini', 'claude', o 'deepseek'
             model: Modelo específico (opcional)
             api_key: API key (opcional, usa .env si no se provee)
 
         Returns:
             LLMClient instance
         """
-        provider_lower = provider.lower()
-
-        if provider_lower == 'gemini':
+        if provider.lower() == 'gemini':
             return GeminiClient(model or "gemini-2.0-flash-exp", api_key)
-        elif provider_lower == 'deepseek':
+        elif provider.lower() == 'claude':
+            return ClaudeClient(model or "claude-sonnet-4-20250514", api_key)
+        elif provider.lower() == 'deepseek':
             return DeepSeekClient(model or "deepseek-chat", api_key)
-        elif provider_lower == 'mistral':
-            return MistralClient(model or "mistral-large-latest", api_key)
         else:
-            raise ValueError(f"Unknown provider: {provider}. Use 'gemini', 'deepseek' or 'mistral'")
+            raise ValueError(f"Unknown provider: {provider}. Use 'gemini', 'claude', or 'deepseek'")
 
 
 # Default configurations per Sefira
-# Distribución optimizada: Principalmente Gemini (gratis), Mistral y DeepSeek para módulos específicos
 SEFIROT_LLM_MAPPING = {
-    'keter': ('gemini', 'gemini-2.0-flash-exp'),          # Alineación inicial - GEMINI
-    'chochmah': ('mistral', 'mistral-large-latest'),      # Análisis profundo - MISTRAL
-    'binah_occidente': ('gemini', 'gemini-2.0-flash-exp'), # BinahSigma Occidente - GEMINI
-    'binah_oriente': ('deepseek', 'deepseek-chat'),       # BinahSigma Oriente - DEEPSEEK
-    'binah': ('gemini', 'gemini-2.0-flash-exp'),          # Binah default - GEMINI
-    'chesed': ('gemini', 'gemini-2.0-flash-exp'),         # Expansión - GEMINI
-    'gevurah': ('gemini', 'gemini-2.0-flash-exp'),        # Restricción - GEMINI
-    'tiferet': ('gemini', 'gemini-2.0-flash-exp'),        # Balance - GEMINI
-    'netzach': ('gemini', 'gemini-2.0-flash-exp'),        # Estrategia - GEMINI
-    'hod': ('gemini', 'gemini-2.0-flash-exp'),            # Análisis social - GEMINI
-    'yesod': ('gemini', 'gemini-2.0-flash-exp'),          # Decisión - GEMINI
-    'malchut': ('gemini', 'gemini-2.0-flash-exp'),        # Reporte final - GEMINI
+    'keter': ('gemini', 'gemini-2.0-flash-exp'),
+    'chochmah': ('gemini', 'gemini-2.0-flash-exp'),
+    'binah': ('gemini', 'gemini-2.0-flash-exp'),
+    'chesed': ('gemini', 'gemini-2.0-flash-exp'),
+    'gevurah': ('gemini', 'gemini-2.0-flash-exp'),
+    'tiferet': ('gemini', 'gemini-2.0-flash-exp'),
+    'netzach': ('gemini', 'gemini-2.0-flash-exp'),
+    'hod': ('gemini', 'gemini-2.0-flash-exp'),
+    'yesod': ('gemini', 'gemini-2.0-flash-exp'),
+    'malchut': ('gemini', 'gemini-2.0-flash-exp'),
 }
 
 

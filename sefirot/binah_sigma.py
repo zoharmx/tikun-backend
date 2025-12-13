@@ -87,7 +87,7 @@ class BinahSigma(Binah):
 
         # Import DeepSeek client
         try:
-            from clients.deepseek_client import DeepSeekClient
+            from .llm_client import DeepSeekClient
             self.east_llm = DeepSeekClient()
             self.has_deepseek = True
         except Exception as e:
@@ -168,7 +168,7 @@ class BinahSigma(Binah):
 
         # 2. ANÁLISIS ORIENTAL (DeepSeek)
         east_prompt = self._build_east_prompt(scenario, previous_results)
-        east_response = self.east_llm.ask(east_prompt)
+        east_response = self.east_llm.generate(east_prompt, temperature=0.6)
 
         # Parse East response (DeepSeek puede retornar con/sin markdown)
         try:
