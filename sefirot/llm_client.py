@@ -58,15 +58,33 @@ class GeminiClient(LLMClient):
             raise ImportError("google-generativeai not installed. Run: pip install google-generativeai")
 
     def generate(self, prompt: str, temperature: float = 0.5) -> str:
-        """Genera respuesta de Gemini"""
-        response = self.client.generate_content(
-            prompt,
-            generation_config={
-                "temperature": temperature,
-                "max_output_tokens": 4096,
-            }
-        )
-        return response.text
+        """Genera respuesta de Gemini con timeout"""
+        import signal
+        
+        def timeout_handler(signum, frame):
+            raise TimeoutError("Gemini API timeout after 30 seconds")
+        
+        # Set 30 second timeout
+        signal.signal(signal.SIGALRM, timeout_handler)
+        signal.alarm(30)
+        
+        try:
+            response = self.client.generate_content(
+                prompt,
+                generation_config={
+                    "temperature": temperature,
+                    "max_output_tokens": 4096,
+                },
+                request_options={"timeout": 30}  # 30 second timeout
+            )
+            signal.alarm(0)  # Cancel timeout
+            return response.text
+        except TimeoutError:
+            signal.alarm(0)
+            raise TimeoutError("Gemini API took too long to respond (>30s)")
+        except Exception as e:
+            signal.alarm(0)
+            raise
 
 
 class ClaudeClient(LLMClient):
@@ -110,16 +128,22 @@ class DeepSeekClient(LLMClient):
             raise ImportError("openai not installed. Run: pip install openai")
 
     def generate(self, prompt: str, temperature: float = 0.5) -> str:
-        """Genera respuesta de DeepSeek"""
-        response = self.client.chat.completions.create(
-            model=self.model,
-            messages=[
-                {"role": "user", "content": prompt}
-            ],
-            temperature=temperature,
-            max_tokens=4096
-        )
-        return response.choices[0].message.content
+        """Genera respuesta de DeepSeek con timeout"""
+        try:
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=temperature,
+                max_tokens=4096,
+                timeout=30  # 30 second timeout
+            )
+            return response.choices[0].message.content
+        except Exception as e:
+            if "timeout" in str(e).lower():
+                raise TimeoutError("DeepSeek API took too long to respond (>30s)")
+            raise
 
 
 class LLMClientFactory:
